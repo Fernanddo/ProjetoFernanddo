@@ -1,0 +1,43 @@
+---
+- hosts: odoo
+  gather_facts: no
+  pre_tasks:
+    - name: instalar python 2
+      raw: sudo bash -c "test -e /usr/bin/python || (apt -y update && apt -y install python-minimal aptitude)"
+    - name: gather facts
+      setup:
+    - name: faz apt update e upgrade dos pacotes
+      apt:
+        upgrade: yes
+        update_cache: yes
+        cache_valid_time: 3600
+  tasks:
+    - name: instala as dependencias do odoo
+      apt:
+        name: "{{ item }}"
+        state: present
+      with_items: "{{ pacotes_odoo }}"
+    - name: cria o link nodejs
+      file:
+        src: /usr/bin/nodejs
+        dest: /usr/bin/node
+        state: link
+    - name: instala os pacotes less via npm
+      npm:
+        name: "{{ item }}"
+        global: yes
+      with_items:
+        - less
+        - less-plugin-clean-css
+    - name: adiciona o repositorio postgres
+      apt_repository:
+        repo: deb http://apt.postgresql.org/pub/repos/apt/ xenial-pgdg main
+        state: present
+    - name: adiciona a chave do repositorio postgres
+      apt_key:
+        url: "https://www.postgresql.org/media/keys/ACCC4CF8.asc"
+        state: present
+    - name: instala o pacote postgres
+      apt:
+        name: postgresql-9.6
+        update_cache: yes
